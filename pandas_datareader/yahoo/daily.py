@@ -224,12 +224,18 @@ class YahooDailyReader(_DailyBaseReader):
         try:
             j = json.loads(re.search(ptrn, resp.text, re.DOTALL).group(1))
 
+            # Initialize new_j with j to handle cases where decryption isn't needed
+            new_j = j
+
             # START: fix from raphf6 due to Yahoo encryption in their API
-            #data = j["context"]["dispatcher"]["stores"]["HistoricalPriceStore"]
             if "_cs" in j and "_cr" in j:
                 new_j = decrypt_cryptojs_aes(j)  # returns j["context"]["dispatcher"]["stores"]
                 # from old code
             data = new_j['HistoricalPriceStore']
+            # Assuming new_j now holds the potentially decrypted data
+            # Use new_j with a fallback to the original j if needed
+            data = new_j.get('HistoricalPriceStore', j.get("context", {}).get("dispatcher", {}).get("stores", {}))
+
             # END: fix from raphf6 due to Yahoo encryption in their API
         
         except KeyError as exc:
